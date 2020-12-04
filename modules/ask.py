@@ -49,7 +49,6 @@ def random_questions():
     row = list()
     for i in range(3):
         r = random.randint(0, len(questions)-1)
-        print(r)
         msg += f'{i+1}. {questions[r]}\n\n'
         q_id = qid(questions[r])
         row.append(types.InlineKeyboardButton(text=str(i + 1),

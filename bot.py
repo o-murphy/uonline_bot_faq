@@ -48,6 +48,10 @@ def menu(call):
 @bot.callback_query_handler(func=lambda call: call.data in ['to_start', 'sup'])
 def cancel_cmd(call):
     if call.data == 'to_start':
+        try:
+            bot.delete_message(call.from_user.id, call.message.message_id)
+        except Exception as exc:
+            print(exc)
         start(call)
     elif call.data == 'sup':
         sup(call)
@@ -113,17 +117,14 @@ def get_phone(message):
         bot.send_message(message.chat.id,
                          'Регистрация заявки отменена!',
                          reply_markup=key_remove.make())
-        # cancel.run(bot, message)
         start(message)
     else:
         phone_number = phone.get(message)
-        print(phone_number)
         is_valid = phone.check(phone_number)
         if is_valid and len(list(phone_number)) == 13:
             bot.send_message(message.from_user.id,
                              'Коротко опишите Ваш запрос',
                              reply_markup=key_cancel.make())
-            print('ok')
             bot.register_next_step_handler(message, register, phone_number)
         else:
             bot.send_message(message.from_user.id,
