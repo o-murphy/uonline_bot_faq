@@ -98,10 +98,17 @@ def get_question(message):
 
 @bot.callback_query_handler(lambda call: re.search('q_id=', call.data))
 def get_answer(call):
-    msg = ask.answer(int(re.sub('q_id=', '', call.data)))
-    bot.send_message(call.from_user.id, msg,
-                     reply_markup=keys_sup.make(),
-                     parse_mode='html')
+    q_id = int(re.sub('q_id=', '', call.data))
+    msg = ask.answer(q_id)
+    photo = ask.pic(q_id)
+    if not photo:
+        bot.send_message(call.from_user.id, msg,
+                         reply_markup=keys_sup.make(),
+                         parse_mode='html')
+    else:
+        bot.send_photo(call.from_user.id, photo, msg,
+                       reply_markup=keys_sup.make(),
+                       parse_mode='html')
     try:
         bot.delete_message(call.message.chat.id, call.message.message_id)
     except Exception as exc:
@@ -164,7 +171,7 @@ if __name__ == '__main__':
     print('bot started!\npolling..')
     while True:
         try:
-            bot.send_message(admin_group, 'bot started!\npolling..')
+            # bot.send_message(admin_group, 'bot started!\npolling..')
             bot.polling()
         except Exception as e:
             try:
