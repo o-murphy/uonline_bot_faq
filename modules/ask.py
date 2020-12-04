@@ -12,17 +12,16 @@ morph = pymorphy2.MorphAnalyzer()
 def classify_question(text):
     questions = load()
     msg = ''
-    kb = types.InlineKeyboardMarkup(row_width=3)
+    kb = types.InlineKeyboardMarkup(row_width=4)
     row = list()
-
     text = ' '.join(morph.parse(word)[0].normal_form for word in text.split())
     scores = list()
-
     for question in questions:
         norm_question = ' '.join(morph.parse(word)[0].normal_form for word in question.split())
         current = fuzz.WRatio(
             norm_question.lower(),
-            text.lower()) + fuzz.token_sort_ratio(
+            text.lower()
+        ) + fuzz.token_sort_ratio(
             norm_question.lower(),
             text.lower()
         )
@@ -31,21 +30,23 @@ def classify_question(text):
     # получение ответа
     for i in range(3):
         question = questions[scores.index(max(scores))]
-        # answer += question + '\n\n' + faq[questions[scores.index(max(scores))]] + '\n\n'
         q_id = qid(question)
         row.append(types.InlineKeyboardButton(text=str(i + 1),
                                               callback_data=f'q_id={q_id}'))
         msg += f'{i+1}. {question}\n\n'
         questions.pop(scores.index(max(scores)))
         scores.pop(scores.index(max(scores)))
+    row.append(types.InlineKeyboardButton(text='В меню', callback_data='to_start'))
+    row.append(types.InlineKeyboardButton(text='Нет, спросить у поддержки', callback_data='sup'))
     kb.add(*row)
+
     return {'answer': msg, 'kb': kb}
 
 
 def random_questions():
     questions = load()
     msg = ''
-    kb = types.InlineKeyboardMarkup(row_width=3)
+    kb = types.InlineKeyboardMarkup(row_width=4)
     row = list()
     for i in range(3):
         r = random.randint(0, len(questions)-1)
@@ -53,6 +54,7 @@ def random_questions():
         q_id = qid(questions[r])
         row.append(types.InlineKeyboardButton(text=str(i + 1),
                                               callback_data=f'q_id={q_id}'))
+    row.append(types.InlineKeyboardButton(text='В меню', callback_data='to_start'))
     kb.add(*row)
     return {'msg': msg, 'kb': kb}
 
@@ -62,7 +64,11 @@ def load():
     cursor = conn.cursor()
     sql = "SELECT q FROM faq"
     rows = cursor.execute(sql).fetchall()
-    questions = ', '.join(re.sub(r"\('", '', re.sub(r"',\)", '', str(r))) for r in rows).split(', ')
+    questions = []
+
+    for r in rows:
+        row = re.sub(r"\('", '', re.sub(r"',\)", '', str(r)))
+        questions.append(row)
     conn.close()
     return questions
 
@@ -73,6 +79,11 @@ def qid(question):
     sql = f"SELECT n FROM faq WHERE q='{question}'"
     rows = cursor.execute(sql).fetchall()
     q_id = re.sub(r"\(", '', re.sub(r",\)", '', str(rows[0])))
+    # print(q_id)
+    # for r in rows:
+    #     row = re.sub(r"\('", '', re.sub(r"',\)", '', str(r)))
+    #     q_id.append(row)
+
     conn.close()
     return q_id
 
@@ -83,9 +94,12 @@ def answer(q_id):
     sql = f"SELECT q FROM faq WHERE n={q_id}"
     rows = cursor.execute(sql).fetchall()
     q = re.sub(r"\('", '', re.sub(r"',\)", '', str(rows[0])))
+    # print(q)
     sql = f"SELECT a FROM faq WHERE n={q_id}"
     rows = cursor.execute(sql).fetchall()
     a = re.sub(r"\('", '', re.sub(r"',\)", '', str(rows[0])))
+    # print(a)
     conn.close()
     msg = f'<b>{q}</b>\n\n{a}'
+    # print(msg)
     return msg

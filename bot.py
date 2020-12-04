@@ -39,6 +39,10 @@ def faq_cmd(message):
 
 @bot.callback_query_handler(func=lambda call: call.data in ['faq', 'help', 'contact'])
 def menu(call):
+    try:
+        bot.delete_message(call.from_user.id, call.message.message_id)
+    except Exception as exc:
+        print(exc)
     if call.data == 'faq':
         menu_faq(call)
     else:
@@ -47,11 +51,11 @@ def menu(call):
 
 @bot.callback_query_handler(func=lambda call: call.data in ['to_start', 'sup'])
 def cancel_cmd(call):
+    try:
+        bot.delete_message(call.from_user.id, call.message.message_id)
+    except Exception as exc:
+        print(exc)
     if call.data == 'to_start':
-        try:
-            bot.delete_message(call.from_user.id, call.message.message_id)
-        except Exception as exc:
-            print(exc)
         start(call)
     elif call.data == 'sup':
         sup(call)
@@ -70,9 +74,9 @@ def menu_faq(data):
                      parse_mode='html')
 
 
-@bot.message_handler(content_types=["text", "sticker", "pinned_message", "photo",
-                                    "audio", "video", "document", "contact"],
-                     func=lambda message: message.reply_to_message and message.chat.id == admin_group)
+@bot.message_handler(func=lambda message: message.reply_to_message and message.chat.id == admin_group,
+                     content_types=["text", "sticker", "pinned_message", "photo",
+                                    "audio", "video", "document", "contact"])
 def support_reply_handler(message):
     try:
         support.reply(message)
@@ -83,8 +87,9 @@ def support_reply_handler(message):
 @bot.message_handler(content_types='text', func=lambda message: message.chat.id != admin_group)
 def get_question(message):
     data = ask.classify_question(message.text)
+    msg_text = f'<b>Скорее всего вы имели ввиду:</b>\n\n{data["answer"]}'
     try:
-        bot.send_message(message.from_user.id, data['answer'],
+        bot.send_message(message.from_user.id, msg_text,
                          reply_markup=data['kb'],
                          parse_mode='html')
     except Exception as exc:
@@ -149,8 +154,7 @@ def register(message, phone_number):
                             disable_notification=True)
         bot.send_message(admin_group,
                          f'{task}\n{phone_number}',
-                         reply_markup=key_reply.make(),
-                         disable_notification=True)
+                         reply_markup=key_reply.make())
         bot.send_message(message.from_user.id,
                          f'{task}\nЗарегистрирована в системе поддержки',
                          reply_markup=key_remove.make())
@@ -160,7 +164,12 @@ if __name__ == '__main__':
     print('bot started!\npolling..')
     while True:
         try:
+            bot.send_message(admin_group, 'bot started!\npolling..')
             bot.polling()
         except Exception as e:
-            time.sleep(60)
+            try:
+                bot.send_message(admin_group, f'bot started!\npolling..\n{str(e)}')
+            except Exception as ce:
+                print(str(ce))
             print(str(e))
+            time.sleep(60)
