@@ -12,7 +12,7 @@ abspath = os.path.abspath(__file__)
 d_name = os.path.dirname(abspath)
 os.chdir(d_name)
 
-with open('modules/config.json', 'r') as cfg:
+with open('config.json', 'r') as cfg:
     config = json.load(cfg)
 bot = telebot.TeleBot(config['token'])
 admin = config['admins']
