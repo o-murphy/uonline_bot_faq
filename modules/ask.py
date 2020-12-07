@@ -3,7 +3,6 @@ import pymorphy2
 import random
 from telebot import types
 import sqlite3
-import re
 
 
 morph = pymorphy2.MorphAnalyzer()
@@ -65,10 +64,7 @@ def load():
     sql = "SELECT q FROM faq"
     rows = cursor.execute(sql).fetchall()
     questions = []
-
     for r in rows:
-        # row = re.sub(r"\('", '', re.sub(r"',\)", '', str(r)))
-        # questions.append(row)
         questions.append(r[0])
     conn.close()
     return questions
@@ -79,7 +75,6 @@ def qid(question):
     cursor = conn.cursor()
     sql = f"SELECT n FROM faq WHERE q='{question}'"
     rows = cursor.execute(sql).fetchall()
-    # q_id = re.sub(r"\(", '', re.sub(r",\)", '', str(rows[0])))
     q_id = rows[0][0]
     conn.close()
     return q_id
@@ -90,11 +85,9 @@ def answer(q_id):
     cursor = conn.cursor()
     sql = f"SELECT q FROM faq WHERE n={q_id}"
     rows = cursor.execute(sql).fetchall()
-    # q = re.sub(r"\('", '', re.sub(r"',\)", '', str(rows[0])))
     q = rows[0][0]
     sql = f"SELECT a FROM faq WHERE n={q_id}"
     rows = cursor.execute(sql).fetchall()
-    # a = re.sub(r"\('", '', re.sub(r"',\)", '', str(rows[0])))
     a = rows[0][0]
     conn.close()
     msg = f'<b>{q}</b>\n\n{a}'
